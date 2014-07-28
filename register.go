@@ -86,7 +86,7 @@ func (diw *dockerInspectWriter) Write(p []byte) (n int, err error) {
 	return len(p), nil
 }
 
-func parseCliOptions(c *cli.Context) {
+func startRegistration(c *cli.Context) {
 	if !c.IsSet("container") {
 		fmt.Println("--container argument is required")
 		return
@@ -158,7 +158,7 @@ func main() {
 	app := cli.NewApp()
 	app.Name = "register"
 	app.Usage = "Register the ports of a specfied Docker container with Etcd"
-	app.Action = parseCliOptions
+	app.Action = startRegistration
 	app.Version = "0.0.0"
 	app.Flags = []cli.Flag{
 		cli.StringFlag{Name: "container", Usage: "The container name or id"},
