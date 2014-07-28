@@ -121,8 +121,11 @@ func register(container string) error {
 		return err
 	}
 
-	if _, err := etcdClient.SetDir(fmt.Sprint("containers/", container), ttl); err != nil {
-		return err
+	if _, err := etcdClient.UpdateDir(fmt.Sprint("containers/", container), ttl); err != nil {
+		// If update dir fails is because the directory doesn't exist, so, let's create it
+		if _, err := etcdClient.SetDir(fmt.Sprint("containers/", container), ttl); err != nil {
+			return err
+		}
 	}
 
 	for _, dockerPortMapping := range containerInfo.portMappingsList() {
