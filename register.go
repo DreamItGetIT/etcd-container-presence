@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/signal"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/codegangsta/cli"
@@ -96,7 +97,7 @@ func startRegistration(c *cli.Context) {
 	}
 
 	go deregister(c.GlobalString("container"))
-	fmt.Println("registereing container")
+	fmt.Printf("registereing container %s\n", c.GlobalString("container"))
 
 	for {
 		if err := register(c.GlobalString("container")); err != nil {
@@ -153,7 +154,7 @@ func register(container string) error {
 
 func deregister(container string) error {
 	ch := make(chan os.Signal)
-	signal.Notify(ch, os.Interrupt)
+	signal.Notify(ch, os.Interrupt, syscall.SIGTERM)
 	<-ch
 
 	etcdClient := etcd.NewClient([]string{fmt.Sprintf("http://%s:4001", dockerIP)})
@@ -162,6 +163,7 @@ func deregister(container string) error {
 		return err
 	}
 
+	fmt.Printf("%s container deregistered\n", container)
 	os.Exit(0)
 	return nil
 }
