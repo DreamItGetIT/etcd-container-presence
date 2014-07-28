@@ -4,7 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"os/signal"
 	"strings"
+	"time"
 
 	"github.com/codegangsta/cli"
 	"github.com/coreos/go-etcd/etcd"
@@ -15,6 +17,7 @@ import (
 const (
 	dockerIP = "172.17.42.1"
 	ttl      = 60
+	timeout  = 30 * time.Second
 )
 
 type registerError struct {
@@ -92,8 +95,15 @@ func startRegistration(c *cli.Context) {
 		return
 	}
 
-	if err := register(c.GlobalString("container")); err != nil {
-		fmt.Println(err)
+	go deregister(c.GlobalString("container"))
+	fmt.Println("registereing container")
+
+	for {
+		if err := register(c.GlobalString("container")); err != nil {
+			fmt.Fprintf(os.Stderr, "registration failed ", err)
+		}
+
+		time.Sleep(timeout)
 	}
 }
 
@@ -142,16 +152,22 @@ func register(container string) error {
 }
 
 func deregister(container string) error {
+	ch := make(chan os.Signal)
+	signal.Notify(ch, os.Interrupt)
+	<-ch
+
 	etcdClient := etcd.NewClient([]string{fmt.Sprintf("http://%s:4001", dockerIP)})
 
 	if _, err := etcdClient.Delete(fmt.Sprint("containers/", container), true); err != nil {
 		return err
 	}
 
+	os.Exit(0)
 	return nil
 }
 
 func init() {
+
 }
 
 func main() {
@@ -163,5 +179,6 @@ func main() {
 	app.Flags = []cli.Flag{
 		cli.StringFlag{Name: "container", Usage: "The container name or id"},
 	}
+
 	app.Run(os.Args)
 }
