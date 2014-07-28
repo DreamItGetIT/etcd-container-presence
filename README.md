@@ -2,6 +2,8 @@
 
 An opinionated [Docker](https://www.docker.com/) image which contains a simple program which checks if the specified container is running and register its exposed ports to a running [etcd](http://coreos.com/using-coreos/etcd/) local instance.
 
+It is a [Go](http://golang.org/) implementation of the original [Python one](https://github.com/mwagg/etcd-container-presence), written by [Mike Wagg](https://github.com/mwagg).
+
 ## Description
 
 An opinionated [Docker](https://www.docker.com/) image which contains a simple program which checks if a container is running and in that case it registers the mapped ports to a __local [etcd](http://coreos.com/using-coreos/etcd/) instance__.
