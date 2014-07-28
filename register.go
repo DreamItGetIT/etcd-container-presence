@@ -100,7 +100,7 @@ func startRegistration(c *cli.Context) {
 
 	for {
 		if err := register(c.GlobalString("container")); err != nil {
-			fmt.Fprintf(os.Stderr, "registration failed ", err)
+			fmt.Fprintf(os.Stderr, "registration failed: %s\n", err)
 		}
 
 		time.Sleep(timeout)
