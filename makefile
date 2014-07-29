@@ -4,7 +4,7 @@ all: build-register docker-image
 
 docker-image:
 	@echo "Building docker image"
-	@cd docker-image; docker build -t docker.internal/etcd-container-presence .
+	@cd docker-image; docker build -t digit/etcd-container-presence .
 
 build-register:
 	@echo "Compiling register"
