@@ -34,8 +34,8 @@ type dockerInspectWriter struct {
 }
 
 type dockerInspectPortMapping struct {
-	HostConfig struct {
-		PortBindings map[string][]struct {
+	NetworkSettings struct {
+		Ports map[string][]struct {
 			HostIp   string
 			HostPort string
 		}
@@ -52,9 +52,9 @@ type dockerPortMapping struct {
 }
 
 func (dpr dockerInspectPortMapping) portMappingsList() []*dockerPortMapping {
-	dockerPortMappings := make([]*dockerPortMapping, 0, len(dpr.HostConfig.PortBindings))
+	dockerPortMappings := make([]*dockerPortMapping, 0, len(dpr.NetworkSettings.Ports))
 
-	for ContainerPort, Binding := range dpr.HostConfig.PortBindings {
+	for ContainerPort, Binding := range dpr.NetworkSettings.Ports {
 		currentDockerPortMapping := dockerPortMapping{}
 
 		if len(Binding) == 0 {
