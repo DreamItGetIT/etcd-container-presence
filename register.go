@@ -168,10 +168,6 @@ func deregister(container string) error {
 	return nil
 }
 
-func init() {
-
-}
-
 func main() {
 	app := cli.NewApp()
 	app.Name = "register"
