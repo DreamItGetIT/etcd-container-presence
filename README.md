@@ -14,7 +14,7 @@ The requirement of [etcd](http://coreos.com/using-coreos/etcd/) is because the `
 
 * Create the directory `/containers/{container_name}/` if it doesn't exist, where `{container_name}` is the specified container's name
 * For each port register the following keys into the created directory:
-    * `/containers/{container_name}/{port}/host` and whose value is the IP of the interface where the port is exposed with a fallback to the default docker daemon IP (172.17.42.1) when it is `0.0.0.0`
+    * `/containers/{container_name}/{port}/host` and whose value is the IP of the interface where the port is exposed with a fallback to the default docker daemon IP (`172.17.42.1`) when it is `0.0.0.0`
     * `/containers/{container_name}/{port}/port` and whose value is the port exposed by docker to the host machine
      
     NOTE: that `{port}` is the port exposed by the container.
