@@ -90,17 +90,24 @@ func (diw *dockerInspectWriter) Write(p []byte) (n int, err error) {
 	return len(p), nil
 }
 
+func containerKey(c *cli.Context) string {
+	if c.IsSet("prefix") {
+		return c.GlobalString("prefix") + "/" + c.GlobalString("container")
+	}
+	return c.GlobalString("container")
+}
+
 func startRegistration(c *cli.Context) {
 	if !c.IsSet("container") {
 		fmt.Println("--container argument is required")
 		return
 	}
 
-	go deregister(c.GlobalString("container"))
-	fmt.Printf("registereing container %s\n", c.GlobalString("container"))
+	go deregister(c)
+	fmt.Printf("registering container %s\n", containerKey(c))
 
 	for {
-		if err := register(c.GlobalString("container")); err != nil {
+		if err := register(c); err != nil {
 			fmt.Fprintf(os.Stderr, "registration failed: %s\n", err)
 		}
 
@@ -124,7 +131,9 @@ func getContainerInfo(container string) (*dockerInspectPortMapping, error) {
 	return &dockerWriter.lastCommand[0], nil
 }
 
-func register(container string) error {
+func register(c *cli.Context) error {
+        container := c.GlobalString("container")
+
 	etcdClient := etcd.NewClient([]string{fmt.Sprintf("http://%s:4001", dockerIP)})
 	containerInfo, err := getContainerInfo(container)
 
@@ -132,19 +141,20 @@ func register(container string) error {
 		return err
 	}
 
-	if _, err := etcdClient.UpdateDir(fmt.Sprint("containers/", container), ttl); err != nil {
+        key := containerKey(c)
+	if _, err := etcdClient.UpdateDir(fmt.Sprint("containers/", key), ttl); err != nil {
 		// If update dir fails is because the directory doesn't exist, so, let's create it
-		if _, err := etcdClient.SetDir(fmt.Sprint("containers/", container), ttl); err != nil {
+		if _, err := etcdClient.SetDir(fmt.Sprint("containers/", key), ttl); err != nil {
 			return err
 		}
 	}
 
 	for _, dockerPortMapping := range containerInfo.portMappingsList() {
-		if _, err := etcdClient.Set(fmt.Sprintf("containers/%s/ports/%s/host/", container, dockerPortMapping.ContainerPort), dockerPortMapping.Host, ttl); err != nil {
+		if _, err := etcdClient.Set(fmt.Sprintf("containers/%s/ports/%s/host/", key, dockerPortMapping.ContainerPort), dockerPortMapping.Host, ttl); err != nil {
 			return err
 		}
 
-		if _, err := etcdClient.Set(fmt.Sprintf("containers/%s/ports/%s/port/", container, dockerPortMapping.ContainerPort), dockerPortMapping.Port, ttl); err != nil {
+		if _, err := etcdClient.Set(fmt.Sprintf("containers/%s/ports/%s/port/", key, dockerPortMapping.ContainerPort), dockerPortMapping.Port, ttl); err != nil {
 			return err
 		}
 	}
@@ -152,18 +162,19 @@ func register(container string) error {
 	return nil
 }
 
-func deregister(container string) error {
+func deregister(c *cli.Context) error {
 	ch := make(chan os.Signal)
 	signal.Notify(ch, os.Interrupt, syscall.SIGTERM)
 	<-ch
 
 	etcdClient := etcd.NewClient([]string{fmt.Sprintf("http://%s:4001", dockerIP)})
 
-	if _, err := etcdClient.Delete(fmt.Sprint("containers/", container), true); err != nil {
+	key := containerKey(c)
+	if _, err := etcdClient.Delete(fmt.Sprint("containers/", key), true); err != nil {
 		return err
 	}
 
-	fmt.Printf("%s container deregistered\n", container)
+	fmt.Printf("%s container deregistered\n", key)
 	os.Exit(0)
 	return nil
 }
@@ -176,6 +187,7 @@ func main() {
 	app.Version = "0.0.0"
 	app.Flags = []cli.Flag{
 		cli.StringFlag{Name: "container", Usage: "The container name or id"},
+		cli.StringFlag{Name: "prefix", Usage: "An optional key prefix"},
 	}
 
 	app.Run(os.Args)
