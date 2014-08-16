@@ -24,3 +24,4 @@ _testmain.go
 
 # Gom dependencies folder
 _vendor
+register
